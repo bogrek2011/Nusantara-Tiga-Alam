@@ -19,3 +19,9 @@ server/**/bin/
 
 # Keep server project files tracked
 !server/**/*.csproj
+
+# Local development secrets
+ops/.env
+
+# Local development secrets
+ops/.env
