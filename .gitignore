@@ -13,3 +13,9 @@
 .utmp/
 *.slnx
 *.csproj
+
+# Server build output
+server/**/bin/
+
+# Keep server project files tracked
+!server/**/*.csproj

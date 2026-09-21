@@ -1,0 +1,6 @@
+@WorldServer_HostAddress = http://localhost:5157
+
+GET {{WorldServer_HostAddress}}/health
+Accept: application/json
+
+###
