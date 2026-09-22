@@ -111,6 +111,117 @@ app.MapGet("/api/characters/{id:guid}", async (
         : Results.Ok(character);
 });
 
+
+app.MapGet("/api/characters/{id:guid}/equipment", async (
+    Guid id,
+    WorldServerDbContext db,
+    CancellationToken cancellationToken) =>
+{
+    var characterExists = await db.Characters
+        .AsNoTracking()
+        .AnyAsync(x => x.Id == id, cancellationToken);
+
+    if (!characterExists)
+    {
+        return Results.NotFound(new { error = "Character not found." });
+    }
+
+    var equipment = await db.CharacterEquipment
+        .AsNoTracking()
+        .Where(x => x.CharacterId == id)
+        .OrderBy(x => x.Slot)
+        .Select(x => new
+        {
+            x.Id,
+            slot = x.Slot.ToString(),
+            x.ItemCode,
+            x.RefinementLevel,
+            x.IsTradable,
+            x.EquippedAtUtc
+        })
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(equipment);
+});
+
+
+app.MapPut("/api/characters/{id:guid}/equipment/{slot}", async (
+    Guid id,
+    string slot,
+    EquipCharacterRequest request,
+    WorldServerDbContext db,
+    CancellationToken cancellationToken) =>
+{
+    if (!Enum.TryParse<EquipmentSlot>(slot, true, out var equipmentSlot) ||
+        !Enum.IsDefined(equipmentSlot))
+    {
+        return Results.BadRequest(new
+        {
+            error = "Invalid equipment slot."
+        });
+    }
+
+    var itemCode = request.ItemCode.Trim();
+
+    if (itemCode.Length < 1 || itemCode.Length > 64)
+    {
+        return Results.BadRequest(new
+        {
+            error = "ItemCode must be 1-64 characters."
+        });
+    }
+
+    if (request.RefinementLevel < 0 || request.RefinementLevel > 8)
+    {
+        return Results.BadRequest(new
+        {
+            error = "RefinementLevel must be between 0 and 8."
+        });
+    }
+
+    var characterExists = await db.Characters
+        .AnyAsync(x => x.Id == id, cancellationToken);
+
+    if (!characterExists)
+    {
+        return Results.NotFound(new { error = "Character not found." });
+    }
+
+    var equipment = await db.CharacterEquipment
+        .SingleOrDefaultAsync(
+            x => x.CharacterId == id && x.Slot == equipmentSlot,
+            cancellationToken);
+
+    if (equipment is null)
+    {
+        equipment = new CharacterEquipment
+        {
+            Id = Guid.NewGuid(),
+            CharacterId = id,
+            Slot = equipmentSlot
+        };
+
+        db.CharacterEquipment.Add(equipment);
+    }
+
+    equipment.ItemCode = itemCode;
+    equipment.RefinementLevel = request.RefinementLevel;
+    equipment.IsTradable = request.IsTradable;
+    equipment.EquippedAtUtc = DateTime.UtcNow;
+
+    await db.SaveChangesAsync(cancellationToken);
+
+    return Results.Ok(new
+    {
+        equipment.Id,
+        slot = equipment.Slot.ToString(),
+        equipment.ItemCode,
+        equipment.RefinementLevel,
+        equipment.IsTradable,
+        equipment.EquippedAtUtc
+    });
+});
+
 app.MapPost("/api/characters", async (
     CreateCharacterRequest request,
     WorldServerDbContext db,
@@ -177,3 +288,9 @@ app.Run();
 public sealed record CreateCharacterRequest(
     string Name,
     int Faction);
+
+
+public sealed record EquipCharacterRequest(
+    string ItemCode,
+    int RefinementLevel,
+    bool IsTradable);
