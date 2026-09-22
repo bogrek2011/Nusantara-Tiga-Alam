@@ -4,7 +4,11 @@ using UnityEngine.Networking;
 
 public sealed class WorldServerCharacterClient : MonoBehaviour
 {
-    private const string ServerBaseUrl = "http://192.168.1.8:5080";
+    private const string EditorServerBaseUrl = "http://127.0.0.1:5080";
+    private const string AndroidServerBaseUrl = "http://192.168.1.8:5080";
+
+    private static string ServerBaseUrl =>
+        Application.isEditor ? EditorServerBaseUrl : AndroidServerBaseUrl;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
