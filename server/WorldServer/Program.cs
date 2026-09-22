@@ -58,4 +58,12 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     }
 });
 
+app.MapGet("/api/handshake", () => Results.Ok(new
+{
+    service = "WorldServer",
+    protocolVersion = 1,
+    serverVersion = "M0",
+    status = "ready"
+}));
+
 app.Run();
