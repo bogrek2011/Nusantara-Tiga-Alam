@@ -1,7 +1,9 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using StackExchange.Redis;
+using WorldServer.Data;
 using WorldServer.Health;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,9 @@ var redisConnectionString =
 
 builder.Services.AddSingleton(
     NpgsqlDataSource.Create(postgresConnectionString));
+
+builder.Services.AddDbContext<WorldServerDbContext>(options =>
+    options.UseNpgsql(postgresConnectionString));
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(
     _ => ConnectionMultiplexer.Connect(redisConnectionString));
