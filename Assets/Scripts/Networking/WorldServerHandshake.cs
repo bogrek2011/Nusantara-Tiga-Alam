@@ -4,7 +4,7 @@ using UnityEngine.Networking;
 
 public sealed class WorldServerHandshake : MonoBehaviour
 {
-    private const string ServerBaseUrl = "http://127.0.0.1:5080";
+    private const string ServerBaseUrl = "http://192.168.1.8:5080";
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
